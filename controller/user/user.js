@@ -238,6 +238,43 @@ exports.createGroup = (req, res, next) => {
         })
 }
 
+exports.getMessageDetail =(req,res,next)=>{
+    const {conversationId} = req.body
+
+
+    return Chat.findAll({
+        where : {
+            conversationId,
+        }
+      
+    })
+    .then(response=>{
+        if(response != undefined || response != null){
+            res.status(200).json({
+                response : response,
+                responseMessage : "all message",
+                responseStatus  :200
+            })
+        }else {
+            res.status(200).json({
+                response : [],
+                responseMessage : "all message",
+                responseStatus  :200
+            })
+        }
+    })
+    .catch((err) => {
+        res.status(200).json({
+            responseStatus: 401,
+            response: err,
+            responseMessage: "error"
+        });
+
+    })
+
+}
+
+
 exports.getMessage=(req,res,next)=>{
     const { conversationId } = req.body
 
@@ -289,7 +326,7 @@ exports.getMessage=(req,res,next)=>{
 
 exports.getUserMessage=(req,res,next)=>{
     const {userId} = req.body
-
+console.log(userId)
     return Conversation.findAll({
         where : {
             users : {

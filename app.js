@@ -5,6 +5,8 @@ const path = require('path');
 const compression = require('compression');
 const bodyParser = require('body-parser');
 const multer = require('multer');
+const Cryptr = require('cryptr')
+const cryptr = new Cryptr('myTotalySecretKey');
 var fs = require('fs');
 const app = express();
 const http = require('http').createServer(app);
@@ -26,7 +28,8 @@ const Conversation = require('./model/conversation')
 //Import Route
 const authRoutes = require('./routes/auth/auth')
 const adminRoutes = require('./routes/admin/admin')
-const userRoutes = require('./routes/user/user')
+const userRoutes = require('./routes/user/user');
+const { memoryStorage } = require('multer');
 
 
 
@@ -85,16 +88,20 @@ io.on('connection', socket => {
 
     })
 
+    socket.on('join_room' , (room)=>{
+        console.log(room , "jo,ned")
+            socket.join(room)
+    })
+
     socket.on('send_message', (message) => {
+        console.log(socket.id)
         // console.log(message, '======',message.id)
         io.emit('new_message', message)
 
-        // users : Sequelize.JSON,
-        // roleName : Sequelize.STRING,
-        // firstUser : Sequelize.STRING,
-        // lastMessage : Sequelize.STRING,
-        // notification : Sequelize.STRING,
-        // deleted : Sequelize.BOOLEAN 
+
+        const encodeMessage = cryptr.encrypt(message.message)
+        console.log(cryptr.decrypt(encodeMessage), "==0====", encodeMessage)
+
         return Conversation.findAll({
             where: {
                 id: message.conversationId != undefined ? message.conversationId : 0
@@ -103,28 +110,30 @@ io.on('connection', socket => {
 
         })
             .then((result) => {
-                console.log("result", result.length)
+                console.log("result", encodeMessage)
                 if (result.length === 0) {
                     return Conversation.create({
-                        users:[2,3,4],
+                        users: [2, 3, 4],
                         roleName: "users",
                         firstUser: "2",
-                        lastMessage: message.message,
+                        lastMessage: encodeMessage,
                         notification: "merhaba",
                         deleted: false
                     })
+
                 } else {
+                    console.log("result", encodeMessage)
                     return Chat.create({
                         senderId: 3,
                         conversationId: 2,
-                        message: message.message,
+                        message: encodeMessage,
                         deleted: false,
                         conversationId: message.conversationId
                     })
                         .then((result => {
                             console.log("err", result)
                             Conversation.update({
-                                lastMessage: message.message
+                                lastMessage: encodeMessage
                             },
                                 {
                                     where: {
@@ -141,9 +150,23 @@ io.on('connection', socket => {
 
             })
             .then(response => {
+
                 console.log(response, "respkne")
                 if (response != undefined) {
-                    console.log("merhaba")
+                    return Chat.create({
+                        senderId: 3,
+                        conversationId: 2,
+                        message: encodeMessage,
+                        deleted: false,
+                        conversationId: response.id
+                    })
+
+                }
+            })
+            .then((data) => {
+                console.log(data , "dataaaaaa")
+                if (data != undefined || data != null) {
+                   console.log(data)
                 }
             })
             .catch((err) => {

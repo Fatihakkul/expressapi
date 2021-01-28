@@ -15,6 +15,8 @@ router.get('/postdetail' , userController.getPostDetail)
 router.get('/post' , userController.getAllPost)
 router.get('/message' , userController.getMessage)
 router.get('/usermessage' , userController.getUserMessage)
+router.get('/messagedetail' , userController.getMessageDetail)
+
 // router.post('./addMarque', isAuth, )
 
 
